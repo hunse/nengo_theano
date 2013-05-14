@@ -20,7 +20,7 @@ class Connection(object):
     """
 
     def __init__(self, pre, post, neuron_space=False,
-                 transform=None, function=None, weights=None,
+                 transform=None, function=None, weights=None, scale=None,
                  filter=0.005, learning_rule=None):
         """
         Create a new connection between two objects. This connection should
@@ -59,6 +59,7 @@ class Connection(object):
         self.transform = transform
         self.function = function
         self.weights = weights
+        self.scale = scale
         self.filter = filter
         self.learning_rule = learning_rule
 
@@ -159,7 +160,7 @@ class Connection(object):
         if 'tick' not in self._cache:
             if self.neuron_space:
                 if self.weights is not None:
-                    value = T.dot(self.input, self.weights)
+                    value = T.dot(self.input, T.cast(self.weights, self.dtype))
                 else:
                     value = self.input
             elif isinstance(self.input, list):
@@ -171,34 +172,39 @@ class Connection(object):
                     value = T.concatenate(self.input)
 
                 if self.transform is not None:
-                    value = T.dot(value, self.transform)
+                    value = T.dot(value, T.cast(self.transform, self.dtype))
             else:
                 ### Connect single nodes in vector-space.
                 ### Decoders should not be None, unless connecting non-Ensembles
                 if self.decoders is not None and self.transform is not None:
-                    value = T.dot(T.dot(self.input, self.decoders), self.transform)
+                    value = T.dot(
+                        T.dot(self.input, T.cast(self.decoders, self.dtype)),
+                        T.cast(self.transform, self.dtype))
                 elif self.decoders is not None:
-                    value = T.dot(self.input, self.decoders)
+                    value = T.dot(self.input, T.cast(self.decoders, self.dtype))
                 elif self.transform is not None:
-                    value = T.dot(self.input, self.transform)
+                    value = T.dot(self.input, T.cast(self.transform, self.dtype))
                 else:
                     value = self.input
+
+            ### scale output
+            if self.spiking_input:
+                value = value / T.cast(dt, self.dtype)
+            if self.scale is not None:
+                value = value * T.cast(self.scale, self.dtype)
 
             ### filter output
             if self.filter > 0:
                 decay = np.exp(-dt / self.filter).astype(self.dtype)
-                if self.spiking_input:
-                    output = decay*self.output + \
-                        T.cast((1-decay)/dt, self.dtype)*value
-                else:
-                    output = decay*self.output + \
-                        T.cast(1-decay, self.dtype)*value
+                output = T.cast(decay, self.dtype)*self.output + \
+                    T.cast(1-decay, self.dtype)*value
             else:
                 output = value
 
             self._cache['dt'] = dt
             self._cache['tick'] = theano.function(
                 [], [], updates=[(self.output, output)])
+
 
         assert self._cache['dt'] == dt, "Cannot change 'dt' during simulation"
         self._cache['tick']()

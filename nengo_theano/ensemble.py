@@ -67,6 +67,7 @@ class Ensemble(object):
 
     def build(self, dtype):
         self._cache.clear()
+        self.dtype = dtype
 
         if self.encoders is None:
             ### pick encoders from multivariate normal distribution
@@ -163,7 +164,7 @@ class Ensemble(object):
 
             ### get values from vector connections and multiply by encoders
             for input in self.vector_inputs.values():
-                target = target + T.dot(input, self.encoders)
+                target = target + T.dot(input, T.cast(self.encoders, self.dtype))
 
             ### get values from neuron connections
             for input in self.neuron_inputs.values():
@@ -174,7 +175,6 @@ class Ensemble(object):
                 updates = [(self.neurons.parent.input,
                             T.set_subtensor(self.neurons.input, target))]
             else:
-                print "direct update!!!"
                 updates = [(self.neurons.input, target)]
 
             self._cache['tick'] = theano.function([], [], updates=updates)

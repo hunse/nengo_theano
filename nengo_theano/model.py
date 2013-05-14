@@ -1,11 +1,11 @@
 
-from network import Network
+import theano
 
-import ipdb
+from network import Network
 
 class Model(object):
 
-    def __init__(self, name, dt=0.001, dtype='float64'):
+    def __init__(self, name, dt=0.001, dtype=theano.config.floatX):
 
         self.name = name
         self.dtype = dtype

@@ -2,8 +2,7 @@
 Test a basic communication channel between two populations
 """
 
-import collections
-import time
+import collections, sys, os, time
 
 import numpy as np
 import numpy.random as npr
@@ -11,6 +10,9 @@ import scipy.interpolate
 
 import matplotlib
 import matplotlib.pyplot as plt
+
+os.environ['THEANO_FLAGS'] = 'device=gpu, floatX=float32'
+import theano
 
 import nengo_theano as nengo
 

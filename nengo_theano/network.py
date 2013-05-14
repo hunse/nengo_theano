@@ -17,21 +17,22 @@ class Network(object):
 
         self.reset()
 
-    def connect(self, pre, post, function=None, transform=None,
+    def connect(self, pre, post, function=None, transform=None, scale=None,
                 filter=0.005, learning_rule=None):
 
         connection = Connection(pre, post, neuron_space=False,
                                 function=function, transform=transform,
+                                scale=scale,
                                 filter=filter, learning_rule=learning_rule)
         self.Connections.append(connection)
         return connection
 
-    def connect_neurons(self, pre, post, weights=None, filter=0.005,
-                        learning_rule=None):
+    def connect_neurons(self, pre, post, weights=None, scale=None,
+                        filter=0.005, learning_rule=None):
 
         connection = Connection(pre, post, neuron_space=True,
-                                weights=weights, filter=filter,
-                                learning_rule=learning_rule)
+                                weights=weights, scale=scale,
+                                filter=filter, learning_rule=learning_rule)
         self.Connections.append(connection)
         return connection
 
